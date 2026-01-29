@@ -12,4 +12,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::post('/track', [TrackingController::class, 'track'])->name('api.track');
+Route::post('/track', [TrackingController::class, 'track'])
+    ->middleware('validate.tracking.domain')
+    ->name('api.track');
