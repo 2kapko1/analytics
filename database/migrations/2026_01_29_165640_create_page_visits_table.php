@@ -19,7 +19,6 @@ return new class extends Migration
             $table->unsignedInteger('unique_visits')->default(0);
             $table->timestamps();
 
-            $table->unique(['url', 'date']);
             $table->index('date');
         });
     }
