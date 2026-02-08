@@ -20,7 +20,7 @@ class DashboardController extends Controller
         // Get visits over time (last 30 days)
         $timeSeriesData = PageVisit::select(
             'date',
-            DB::raw('SUM("unique_visits") as total')
+            DB::raw('SUM(unique_visits) as total')
         )
             ->where('date', '>=', now()->subDays(30)->toDateString())
             ->groupBy('date')
@@ -36,7 +36,7 @@ class DashboardController extends Controller
         // Get URL statistics (aggregated by URL)
         $urlStats = PageVisit::select(
             'url',
-            DB::raw('SUM("unique_visits") as total')
+            DB::raw('SUM(unique_visits) as total')
         )
             ->groupBy('url')
             ->orderByDesc('total')
