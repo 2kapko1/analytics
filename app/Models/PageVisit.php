@@ -9,14 +9,16 @@ class PageVisit extends Model
     protected $fillable = [
         'url',
         'date',
-        'count',
+        'visits',
+        'unique_visits',
     ];
 
     protected function casts(): array
     {
         return [
             'date' => 'date',
-            'count' => 'integer',
+            'visits' => 'integer',
+            'unique_visits' => 'integer',
         ];
     }
 }

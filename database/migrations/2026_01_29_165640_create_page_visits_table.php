@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('url', 2048);
             $table->date('date');
-            $table->unsignedInteger('count')->default(0);
+            $table->unsignedInteger('visits')->default(0);
+            $table->unsignedInteger('unique_visits')->default(0);
             $table->timestamps();
 
             $table->unique(['url', 'date']);
