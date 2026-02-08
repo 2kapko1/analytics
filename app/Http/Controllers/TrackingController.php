@@ -15,20 +15,14 @@ class TrackingController extends Controller
     public function track(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'type' => 'required|in:visit,download',
             'url' => 'required|url',
-            'downloadUrl' => 'nullable|url',
         ]);
 
-        $type = $validated['type'];
         $url = $validated['url'];
         $ip = $request->ip();
         $today = now()->toDateString();
+        $cacheKey = $this->generateCacheKey($url, $today);
 
-        // Generate cache key for date/type/url combination (stores array of IPs)
-        $cacheKey = $this->generateCacheKey($url, $type, $today);
-
-        // Check if this IP has already been recorded for this URL/type today
         if ($this->isIpAlreadyTracked($cacheKey, $ip)) {
             return response()->json([
                 'success' => true,
@@ -36,11 +30,8 @@ class TrackingController extends Controller
             ]);
         }
 
-        // Add IP to the tracked IPs array for today
         $this->trackIp($cacheKey, $ip);
-
-        // Update or create the page visit record
-        $this->recordVisit($url, $today, $type);
+        $this->recordVisit($url, $today);
 
         return response()->json([
             'success' => true,
@@ -52,9 +43,9 @@ class TrackingController extends Controller
      * Generate a cache key for date/type/url combination.
      * IPs are stored as an array within this key.
      */
-    protected function generateCacheKey(string $url, string $type, string $date): string
+    protected function generateCacheKey(string $url, string $date): string
     {
-        return sprintf('tracking:%s:%s:%s', $date, $type, md5($url));
+        return sprintf('tracking:%s:%s', $date, md5($url));
     }
 
     /**
@@ -82,7 +73,7 @@ class TrackingController extends Controller
     /**
      * Record the visit or download in the database.
      */
-    protected function recordVisit(string $url, string $date, string $type): void
+    protected function recordVisit(string $url, string $date): void
     {
         // Use upsert-style approach to handle concurrent requests
         $pageVisit = PageVisit::where('url', $url)
