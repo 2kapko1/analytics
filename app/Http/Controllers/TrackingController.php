@@ -23,29 +23,9 @@ class TrackingController extends Controller
         ]);
     }
 
-    protected function generateCacheKey(string $url, string $date): string
-    {
-        return sprintf('tracking:%s:%s', $date, md5($url));
-    }
-
-    protected function isIpAlreadyTracked(string $cacheKey, string $ip): bool
-    {
-        $trackedIps = Cache::get($cacheKey, []);
-        return in_array($ip, $trackedIps, true);
-    }
-
-    protected function trackIp(string $cacheKey, string $ip): void
-    {
-        $trackedIps = Cache::get($cacheKey, []);
-        $trackedIps[] = $ip;
-
-        $secondsUntilMidnight = now()->endOfDay()->diffInSeconds(now());
-        Cache::put($cacheKey, $trackedIps, $secondsUntilMidnight);
-    }
-
     protected function recordVisit(string $ip, string $url, string $date): void
     {
-        $cacheKey = $this->generateCacheKey($url, $date);
+        $cacheKey = sprintf('tracking:%s:%s', $date, md5($url));
 
         $pageVisit = PageVisit::where('url', $url)
             ->where('date', $date)
@@ -70,5 +50,20 @@ class TrackingController extends Controller
                 $this->trackIp($cacheKey, $ip);
             } catch (\Illuminate\Database\QueryException $e) {}
         }
+    }
+
+    protected function isIpAlreadyTracked(string $cacheKey, string $ip): bool
+    {
+        $trackedIps = Cache::get($cacheKey, []);
+        return in_array($ip, $trackedIps, true);
+    }
+
+    protected function trackIp(string $cacheKey, string $ip): void
+    {
+        $trackedIps = Cache::get($cacheKey, []);
+        $trackedIps[] = $ip;
+
+        $secondsUntilMidnight = now()->endOfDay()->diffInSeconds(now(), true);
+        Cache::put($cacheKey, $trackedIps, $secondsUntilMidnight);
     }
 }
