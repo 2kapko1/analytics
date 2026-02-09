@@ -17,8 +17,6 @@ class ValidateTrackingDomain
     {
         $url = $request->input('url');
 
-        // Only validate domain if URL is provided and is a valid URL format
-        // Let Laravel's validation handle invalid URL formats
         if ($url && filter_var($url, FILTER_VALIDATE_URL) && !$this->isAllowedDomain($url)) {
             return response()->json([
                 'success' => false,
@@ -34,14 +32,12 @@ class ValidateTrackingDomain
      */
     protected function isAllowedDomain(string $url): bool
     {
-        return true;
         $host = parse_url($url, PHP_URL_HOST);
 
         if (!$host) {
             return false;
         }
 
-        // Allow any subdomain of vify.pl (including vify.pl itself)
-        return $host === 'vify.pl' || str_ends_with($host, '.vify.pl');
+        return $host === 'vify.pl' || str_ends_with($host, '.vify.pl') || $host === 'visitify.pl' || str_ends_with($host, '.visitify.pl');
     }
 }

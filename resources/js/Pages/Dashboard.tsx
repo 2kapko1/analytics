@@ -29,24 +29,46 @@ interface TimeSeriesDataPoint {
 
 interface UrlStat {
     url: string;
-    count: number;
+    totalVisits: number;
+    totalUniqueVisits: number;
+    todayVisits: number;
+    todayUniqueVisits: number;
+    monthVisits: number;
+    monthUniqueVisits: number;
 }
 
 interface DashboardProps {
     totalPageViews: number;
+    totalsToday: {
+        visits: number;
+        uniqueVisits: number;
+    };
+    totalsMonth: {
+        visits: number;
+        uniqueVisits: number;
+    };
     timeSeriesData: TimeSeriesDataPoint[];
     urlStats: UrlStat[];
 }
 
-type SortField = 'url' | 'count';
+type SortField =
+    | 'url'
+    | 'todayVisits'
+    | 'todayUniqueVisits'
+    | 'monthVisits'
+    | 'monthUniqueVisits'
+    | 'totalVisits'
+    | 'totalUniqueVisits';
 type SortDirection = 'asc' | 'desc';
 
 export default function Dashboard({
     totalPageViews,
+    totalsToday,
+    totalsMonth,
     timeSeriesData,
     urlStats,
 }: DashboardProps) {
-    const [sortField, setSortField] = useState<SortField>('count');
+    const [sortField, setSortField] = useState<SortField>('monthUniqueVisits');
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
     const handleSort = (field: SortField) => {
@@ -63,8 +85,8 @@ export default function Dashboard({
             let comparison = 0;
             if (sortField === 'url') {
                 comparison = a.url.localeCompare(b.url);
-            } else if (sortField === 'count') {
-                comparison = a.count - b.count;
+            } else {
+                comparison = a[sortField] - b[sortField];
             }
             return sortDirection === 'asc' ? comparison : -comparison;
         });
@@ -93,7 +115,7 @@ export default function Dashboard({
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     {/* Summary Card */}
-                    <div className="grid gap-4 md:grid-cols-1 mb-8">
+                    <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3 mb-8">
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">
@@ -107,6 +129,40 @@ export default function Dashboard({
                                 </div>
                                 <CardDescription>
                                     Unique page views tracked
+                                </CardDescription>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">
+                                    Today
+                                </CardTitle>
+                                <Eye className="h-4 w-4 text-gray-500" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">
+                                    {totalsToday.visits.toLocaleString()}
+                                </div>
+                                <CardDescription>
+                                    Visits • {totalsToday.uniqueVisits.toLocaleString()} unique
+                                </CardDescription>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">
+                                    This Month
+                                </CardTitle>
+                                <Eye className="h-4 w-4 text-gray-500" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">
+                                    {totalsMonth.visits.toLocaleString()}
+                                </div>
+                                <CardDescription>
+                                    Visits • {totalsMonth.uniqueVisits.toLocaleString()} unique
                                 </CardDescription>
                             </CardContent>
                         </Card>
@@ -174,10 +230,46 @@ export default function Dashboard({
                                             </TableHead>
                                             <TableHead
                                                 className="cursor-pointer hover:bg-gray-50 text-right"
-                                                onClick={() => handleSort('count')}
+                                                onClick={() => handleSort('todayVisits')}
                                             >
                                                 <div className="flex items-center justify-end gap-2">
-                                                    Page Views
+                                                    Today Visits
+                                                    <ArrowUpDown className="h-4 w-4" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="cursor-pointer hover:bg-gray-50 text-right"
+                                                onClick={() => handleSort('todayUniqueVisits')}
+                                            >
+                                                <div className="flex items-center justify-end gap-2">
+                                                    Today Unique
+                                                    <ArrowUpDown className="h-4 w-4" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="cursor-pointer hover:bg-gray-50 text-right"
+                                                onClick={() => handleSort('monthVisits')}
+                                            >
+                                                <div className="flex items-center justify-end gap-2">
+                                                    Month Visits
+                                                    <ArrowUpDown className="h-4 w-4" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="cursor-pointer hover:bg-gray-50 text-right"
+                                                onClick={() => handleSort('monthUniqueVisits')}
+                                            >
+                                                <div className="flex items-center justify-end gap-2">
+                                                    Month Unique
+                                                    <ArrowUpDown className="h-4 w-4" />
+                                                </div>
+                                            </TableHead>
+                                            <TableHead
+                                                className="cursor-pointer hover:bg-gray-50 text-right"
+                                                onClick={() => handleSort('totalUniqueVisits')}
+                                            >
+                                                <div className="flex items-center justify-end gap-2">
+                                                    Total Unique
                                                     <ArrowUpDown className="h-4 w-4" />
                                                 </div>
                                             </TableHead>
@@ -190,7 +282,19 @@ export default function Dashboard({
                                                     {stat.url}
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    {stat.count.toLocaleString()}
+                                                    {stat.todayVisits.toLocaleString()}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {stat.todayUniqueVisits.toLocaleString()}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {stat.monthVisits.toLocaleString()}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {stat.monthUniqueVisits.toLocaleString()}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {stat.totalUniqueVisits.toLocaleString()}
                                                 </TableCell>
                                             </TableRow>
                                         ))}
