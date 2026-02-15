@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import {
     Table,
@@ -24,7 +24,8 @@ import { Eye, ArrowUpDown } from 'lucide-react';
 
 interface TimeSeriesDataPoint {
     date: string;
-    count: number;
+    visits: number;
+    uniqueVisits: number;
 }
 
 interface UrlStat {
@@ -38,6 +39,8 @@ interface UrlStat {
 }
 
 interface DashboardProps {
+    basePaths: string[];
+    currentBasePath: string | null;
     totalPageViews: number;
     totalsToday: {
         visits: number;
@@ -62,6 +65,8 @@ type SortField =
 type SortDirection = 'asc' | 'desc';
 
 export default function Dashboard({
+    basePaths,
+    currentBasePath,
     totalPageViews,
     totalsToday,
     totalsMonth,
@@ -113,6 +118,33 @@ export default function Dashboard({
             <Head title="Analytics Dashboard" />
 
             <div className="py-12">
+                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 mb-6">
+                    <div className="flex items-center gap-3">
+                        <label htmlFor="base-path-filter" className="text-sm font-medium text-gray-700">
+                            Filter by domain:
+                        </label>
+                        <select
+                            id="base-path-filter"
+                            value={currentBasePath ?? ''}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                router.get(
+                                    route('dashboard'),
+                                    value ? { base_path: value } : {},
+                                    { preserveState: true, preserveScroll: true },
+                                );
+                            }}
+                            className="rounded-md border w-1/2 border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        >
+                            <option value="">All domains</option>
+                            {basePaths.map((path) => (
+                                <option key={path} value={path}>
+                                    {path}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     {/* Summary Card */}
                     <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3 mb-8">
@@ -190,10 +222,18 @@ export default function Dashboard({
                                         <Legend />
                                         <Line
                                             type="monotone"
-                                            dataKey="count"
+                                            dataKey="visits"
                                             stroke="#3b82f6"
                                             strokeWidth={2}
-                                            name="Page Views"
+                                            name="Visits"
+                                            dot={{ r: 3 }}
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="uniqueVisits"
+                                            stroke="#10b981"
+                                            strokeWidth={2}
+                                            name="Unique Visits"
                                             dot={{ r: 3 }}
                                         />
                                     </LineChart>
