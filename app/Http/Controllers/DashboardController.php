@@ -51,20 +51,21 @@ class DashboardController extends Controller
 
         // Get URL statistics (aggregated by URL)
         $urlStats = PageVisit::query()
-            ->select('url')
-            ->selectRaw('COALESCE(SUM(visits), 0) as total_visits')
-            ->selectRaw('COALESCE(SUM(unique_visits), 0) as total_unique_visits')
-            ->selectRaw('COALESCE(SUM(CASE WHEN date = ? THEN visits ELSE 0 END), 0) as today_visits', [$today])
-            ->selectRaw('COALESCE(SUM(CASE WHEN date = ? THEN unique_visits ELSE 0 END), 0) as today_unique_visits', [$today])
+            ->join('urls', 'page_visits.url_id', '=', 'urls.id')
+            ->select(DB::raw("CONCAT(urls.base_path, urls.url) as url"))
+            ->selectRaw('COALESCE(SUM(page_visits.visits), 0) as total_visits')
+            ->selectRaw('COALESCE(SUM(page_visits.unique_visits), 0) as total_unique_visits')
+            ->selectRaw('COALESCE(SUM(CASE WHEN page_visits.date = ? THEN page_visits.visits ELSE 0 END), 0) as today_visits', [$today])
+            ->selectRaw('COALESCE(SUM(CASE WHEN page_visits.date = ? THEN page_visits.unique_visits ELSE 0 END), 0) as today_unique_visits', [$today])
             ->selectRaw(
-                'COALESCE(SUM(CASE WHEN date BETWEEN ? AND ? THEN visits ELSE 0 END), 0) as month_visits',
+                'COALESCE(SUM(CASE WHEN page_visits.date BETWEEN ? AND ? THEN page_visits.visits ELSE 0 END), 0) as month_visits',
                 [$startOfMonth, $endOfMonth]
             )
             ->selectRaw(
-                'COALESCE(SUM(CASE WHEN date BETWEEN ? AND ? THEN unique_visits ELSE 0 END), 0) as month_unique_visits',
+                'COALESCE(SUM(CASE WHEN page_visits.date BETWEEN ? AND ? THEN page_visits.unique_visits ELSE 0 END), 0) as month_unique_visits',
                 [$startOfMonth, $endOfMonth]
             )
-            ->groupBy('url')
+            ->groupBy('urls.base_path', 'urls.url')
             ->orderByDesc('month_unique_visits')
             ->get()
             ->map(function ($item) {

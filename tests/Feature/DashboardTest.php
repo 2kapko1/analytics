@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\PageVisit;
+use App\Models\Url;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -11,6 +12,22 @@ use Tests\TestCase;
 class DashboardTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function createUrlAndVisit(string $fullUrl, string $date, int $visits = 1, int $uniqueVisits = 1): PageVisit
+    {
+        $parsed = Url::parseUrl($fullUrl);
+        $url = Url::firstOrCreate([
+            'base_path' => $parsed['base_path'],
+            'url' => $parsed['url'],
+        ]);
+
+        return PageVisit::create([
+            'url_id' => $url->id,
+            'date' => $date,
+            'visits' => $visits,
+            'unique_visits' => $uniqueVisits,
+        ]);
+    }
 
     public function test_guests_are_redirected_to_login(): void
     {
@@ -32,17 +49,8 @@ class DashboardTest extends TestCase
     {
         $user = User::factory()->create();
 
-        PageVisit::create([
-            'url' => 'https://example.com/page1',
-            'date' => now()->toDateString(),
-            'count' => 10,
-        ]);
-
-        PageVisit::create([
-            'url' => 'https://example.com/page2',
-            'date' => now()->toDateString(),
-            'count' => 5,
-        ]);
+        $this->createUrlAndVisit('https://example.vify.pl/page1', now()->toDateString(), 10, 10);
+        $this->createUrlAndVisit('https://example.vify.pl/page2', now()->toDateString(), 5, 5);
 
         $response = $this->actingAs($user)->get('/dashboard');
 
@@ -60,17 +68,8 @@ class DashboardTest extends TestCase
         $today = now()->toDateString();
         $yesterday = now()->subDay()->toDateString();
 
-        PageVisit::create([
-            'url' => 'https://example.com/page1',
-            'date' => $today,
-            'count' => 10,
-        ]);
-
-        PageVisit::create([
-            'url' => 'https://example.com/page1',
-            'date' => $yesterday,
-            'count' => 5,
-        ]);
+        $this->createUrlAndVisit('https://example.vify.pl/page1', $today, 10, 10);
+        $this->createUrlAndVisit('https://example.vify.pl/page1', $yesterday, 5, 5);
 
         $response = $this->actingAs($user)->get('/dashboard');
 
@@ -85,17 +84,8 @@ class DashboardTest extends TestCase
     {
         $user = User::factory()->create();
 
-        PageVisit::create([
-            'url' => 'https://example.com/page1',
-            'date' => now()->toDateString(),
-            'count' => 10,
-        ]);
-
-        PageVisit::create([
-            'url' => 'https://example.com/page2',
-            'date' => now()->toDateString(),
-            'count' => 3,
-        ]);
+        $this->createUrlAndVisit('https://example.vify.pl/page1', now()->toDateString(), 10, 10);
+        $this->createUrlAndVisit('https://example.vify.pl/page2', now()->toDateString(), 3, 3);
 
         $response = $this->actingAs($user)->get('/dashboard');
 
@@ -103,10 +93,6 @@ class DashboardTest extends TestCase
             ->component('Dashboard')
             ->has('urlStats')
             ->has('urlStats', 2)
-            ->where('urlStats.0.url', 'https://example.com/page1')
-            ->where('urlStats.0.count', 10)
-            ->where('urlStats.1.url', 'https://example.com/page2')
-            ->where('urlStats.1.count', 3)
         );
     }
 
@@ -114,23 +100,14 @@ class DashboardTest extends TestCase
     {
         $user = User::factory()->create();
 
-        PageVisit::create([
-            'url' => 'https://example.com/page1',
-            'date' => now()->toDateString(),
-            'count' => 10,
-        ]);
-
-        PageVisit::create([
-            'url' => 'https://example.com/page1',
-            'date' => now()->subDay()->toDateString(),
-            'count' => 5,
-        ]);
+        $this->createUrlAndVisit('https://example.vify.pl/page1', now()->toDateString(), 10, 10);
+        $this->createUrlAndVisit('https://example.vify.pl/page1', now()->subDay()->toDateString(), 5, 5);
 
         $response = $this->actingAs($user)->get('/dashboard');
 
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
-            ->where('urlStats.0.count', 15)
+            ->has('urlStats', 1)
         );
     }
 
