@@ -15,8 +15,6 @@ return new class extends Migration
             $table->string('base_path', 255);
             $table->string('url', 2048);
             $table->timestamps();
-
-            $table->unique(['base_path', 'url']);
         });
 
         // Add url_id column to page_visits (nullable during migration)
